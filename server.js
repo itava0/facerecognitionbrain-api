@@ -1,11 +1,14 @@
 const express = require("express");
 const app = express();
 const bcrypt = require('bcrypt');
+const cors = require('cors');
 const saltRounds = 10;
 const myPlaintextPassword = 's0/\/\P4$$w0rD';
 const someOtherPlaintextPassword = 'not_password';
 
 app.use(express.json());
+app.use(cors()); 
+
 const database = {
   users: [
     {
@@ -44,7 +47,7 @@ app.post("/signin", (req, res) => {
     req.body.email === database.users[0].email &&
     req.body.password === database.users[0].password
   ) {
-    res.json("success");
+    res.json(database.users[0]);
   } else {
     res.status(400).json("error logging in");
   }
@@ -98,6 +101,6 @@ bcrypt.genSalt(saltRounds, function(err, salt) {
     });
 });
 
-app.listen(3000, () => {
-  console.log("app is running on port 3000");
+app.listen(8000, () => {
+  console.log("app is running on port 8000");
 });
