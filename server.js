@@ -1,5 +1,10 @@
 const express = require("express");
 const app = express();
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+const myPlaintextPassword = 's0/\/\P4$$w0rD';
+const someOtherPlaintextPassword = 'not_password';
+
 app.use(express.json());
 const database = {
   users: [
@@ -18,6 +23,13 @@ const database = {
       password: "bananas",
       entries: 0,
       joined: new Date(),
+    },
+  ],
+  login: [
+    {
+      id: "987",
+      hash: "",
+      email: "john@email.com",
     },
   ],
 };
@@ -65,7 +77,7 @@ app.get("/profile/:id", (req, res) => {
   }
 });
 
-app.put('/image', (req, res) => {
+app.put("/image", (req, res) => {
   const { id } = req.body;
   let found = false;
   database.users.forEach((user) => {
@@ -78,7 +90,13 @@ app.put('/image', (req, res) => {
   if (!found) {
     res.status(404).json("User not found");
   }
-})
+});
+
+bcrypt.genSalt(saltRounds, function(err, salt) {
+    bcrypt.hash(myPlaintextPassword, salt, function(err, hash) {
+        // Store hash in your password DB.
+    });
+});
 
 app.listen(3000, () => {
   console.log("app is running on port 3000");
