@@ -3,14 +3,15 @@ const app = express();
 const bcrypt = require("bcrypt");
 const cors = require("cors");
 const knex = require("knex");
+require('dotenv').config()
 
 const db = knex({
   client: "pg",
   connection: {
-    host: "127.0.0.1",
+    host: process.env.host,
     port: 5433,
     user: "postgres",
-    password: "199526Ivan@1",
+    password: process.env.password,
     database: "smart-brain",
   },
 });
