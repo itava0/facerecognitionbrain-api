@@ -3,7 +3,12 @@ const app = express();
 const bcrypt = require("bcrypt");
 const cors = require("cors");
 const knex = require("knex");
-require('dotenv').config()
+require("dotenv").config();
+
+const register = require("./controllers/register");
+const signin = require("./controllers/signin");
+const profile = require("./controllers/profile");
+const image = require("./controllers/image");
 
 const db = knex({
   client: "pg",
@@ -20,84 +25,22 @@ app.use(express.json());
 app.use(cors());
 
 app.get("/", (req, res) => {
-  res.send('success')
+  res.send("success");
 });
 
-app.post("/signin", (req, res) => {
-  db.select("email", "hash")
-    .from("login")
-    .where("email", "=", req.body.email)
-    .then((data) => {
-      const isValid = bcrypt.compareSync(req.body.password, data[0].hash);
-      if (isValid) {
-       return db.select("*")
-          .from("users")
-          .where("email", "=", req.body.email)
-          .then((user) => {
-            res.json(user[0]);
-          })
-          .catch((err) => res.status(400).json("unable to get user"));
-      } else {
-        res.status(400).json("wrong credentials")
-      }
-    })
-    .catch((err) => res.status(400).json("wrong credentials"));
-});
+app.post("/signin", signin.handleSignin(db, bcrypt));
 
+//Depency Injection => I'm passing down database and bcrypt
 app.post("/register", (req, res) => {
-  const { email, name, password } = req.body;
-  const hash = bcrypt.hashSync(password, 10);
-  db.transaction((trx) => {
-    trx
-      .insert({
-        hash: hash,
-        email: email,
-      })
-      .into("login")
-      .returning("email")
-      .then((loginEmail) => {
-        trx("users")
-          .returning("*")
-          .insert({
-            email: loginEmail[0].email,
-            name: name,
-            joined: new Date(),
-          })
-          .then((user) => {
-            res.json(user[0]);
-          })
-          .then(trx.commit)
-          .catch(trx.rollback);
-      })
-      .catch((err) => res.status(400).json("unable to register"));
-  });
+  register.handleRegister(req, res, db, bcrypt);
 });
 
 app.get("/profile/:id", (req, res) => {
-  const { id } = req.params;
-  db.select("*")
-    .from("users")
-    .where({ id })
-    .then((user) => {
-      if (user.length) {
-        res.json(user[0]);
-      } else {
-        res.status(400).json("Not found");
-      }
-    })
-    .catch((err) => res.status(400).json("error getting user"));
+  profile.handleProfileGet(req, res, db);
 });
 
 app.put("/image", (req, res) => {
-  const { id } = req.body;
-  db("users")
-    .where("id", "=", id)
-    .increment("entries", 1)
-    .returning("entries")
-    .then((entries) => {
-      res.json(entries[0].entries);
-    })
-    .catch((err) => res.status(400).json("unable to get entries"));
+  image.handleImage(req, res, db);
 });
 
 app.listen(8000, () => {
